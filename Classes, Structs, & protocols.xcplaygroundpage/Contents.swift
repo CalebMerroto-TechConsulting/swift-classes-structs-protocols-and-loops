@@ -86,7 +86,7 @@ struct Jedi: Person {
             print("\(padawan.name) is not a padawan, and thus cannot be taken as an apprentice.")
             return
         }
-        if rank == "Master" || rank == "Counselor" || rank == "Master of the Order" {
+        if rank != "Padawan" {
             currentPadawans.append(padawan)
             print("\(name) has taken \(padawan.name) as a Padawan.")
         } else {
@@ -94,14 +94,13 @@ struct Jedi: Person {
         }
     }
 
-    mutating func graduatePadawan(_ padawan: Jedi) {
+    mutating func graduatePadawan(_ padawan: inout Jedi) {
         if let index = currentPadawans.firstIndex(where: { $0.name == padawan.name }) {
-            var graduatedPadawan = currentPadawans[index]
-            if graduatedPadawan.canRankUp {
-                graduatedPadawan.rankUp()
+            if padawan.canRankUp {
+                padawan.rankUp()
                 currentPadawans.remove(at: index)
-                pastPadawans.append(graduatedPadawan)
-                print("\(graduatedPadawan.name) has graduated to the rank of \(graduatedPadawan.rank).")
+                pastPadawans.append(padawan)
+                print("\(padawan.name) has graduated to the rank of \(padawan.rank).")
             } else {
                 print("\(padawan.name) has not completed their trials and thus cannot rank up.")
             }
@@ -123,6 +122,7 @@ struct Jedi: Person {
         if !pastPadawans.isEmpty {
             print("Past Padawans: \(pastPadawans.map { $0.name }.joined(separator: ", "))")
         }
+        print("\n")
     }
 }
 
@@ -154,7 +154,7 @@ class Senator: Person {
     func listSenatePolicies(_ senator: Senator) {
         let policies = senator.getPolicies()
         for policy in policies {
-            print("- \(policy)")
+            print("\(name) - \(policy)")
         }
     }
     
@@ -181,7 +181,7 @@ extension Senator {
 print("\n========= JEDI TEST CASES =========")
 
 // Create Jedi Masters
-var yoda = Jedi(name: "Yoda", species: "Unknown", master: nil, rank: "Master", lightsaberColors: ["Green"])
+var yoda = Jedi(name: "Yoda", species: "Unknown", master: nil, rank: "Grand Master", lightsaberColors: ["Green"])
 var obiWan = Jedi(name: "Obi-Wan Kenobi", species: "Human", master: [yoda], rank: "Master", lightsaberColors: ["Blue"])
 var anakin = Jedi(name: "Anakin Skywalker", species: "Human", master: [obiWan], rank: "Padawan", lightsaberColors: ["Blue"])
 var ahsoka = Jedi(name: "Ahsoka Tano", species: "Togruta", master: [anakin], rank: "Padawan", lightsaberColors: ["Green"])
@@ -195,22 +195,27 @@ anakin.displayInfo()
 // Obi-Wan takes Anakin as a Padawan
 print("\n--- Taking Padawans ---")
 obiWan.takePadawan(anakin)
-
+print("\n")
 // Anakin Repeats Trial Until Passed
-while anakin.rank == "Padawan" {
+while !anakin.canRankUp {
     anakin.attemptTrial()
-    obiWan.graduatePadawan(anakin)
+    print("\n")
 }
+obiWan.graduatePadawan(&anakin)
+anakin.displayInfo()
+print("\n")
 
 // Anakin trains Ahsoka as his first Padawan
 ahsoka.displayInfo()
+print("\n")
 anakin.takePadawan(ahsoka)
 
 // Ahsoka Repeats Trial Until Passed
 repeat {
     ahsoka.attemptTrial()
-    anakin.graduatePadawan(ahsoka)
-} while  ahsoka.rank == "Padawan"
+    anakin.graduatePadawan(&ahsoka)
+    print("\n")
+} while  !ahsoka.hasPassedTrial
 
 // Jedi Say Something
 print("\n--- Jedi Quotes ---")
